@@ -8,6 +8,7 @@ private let guardianLabel = "com.wenjun.szu-network-guardian"
 private let usernameService = "com.wenjun.szu-network-guardian.username"
 private let passwordService = "com.wenjun.szu-network-guardian.password"
 
+#if !TESTING
 @main
 struct SZUNetworkGuardianApp: App {
     @StateObject private var model = GuardianModel()
@@ -19,20 +20,29 @@ struct SZUNetworkGuardianApp: App {
         .menuBarExtraStyle(.window)
     }
 }
+#endif
 
 @MainActor
 final class GuardianModel: ObservableObject {
     @Published var running = false
-    @Published var networkZone = "teaching_office"
-    @Published var intervalMinutes = 5
+    @Published var networkZone = "teaching_office" {
+        didSet { updateSettingsDirty() }
+    }
+    @Published var intervalMinutes = 5 {
+        didSet { updateSettingsDirty() }
+    }
     @Published var feedback = "正在读取后台守护状态…"
     @Published var activity: [String] = []
     @Published var busy = false
     @Published var credentialUsername = ""
     @Published var credentialPassword = ""
     @Published var editingCredentials = false
+    @Published private(set) var settingsDirty = false
     private var refreshTimer: Timer?
     private var lastRunning: Bool?
+    private var savedNetworkZone = "teaching_office"
+    private var savedIntervalMinutes = 5
+    private var applyingConfiguration = false
 
     init() {
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 8, repeats: true) { [weak self] _ in
@@ -119,6 +129,9 @@ final class GuardianModel: ObservableObject {
             let data = try JSONSerialization.data(withJSONObject: config, options: [.prettyPrinted, .sortedKeys])
             try data.write(to: path, options: .atomic)
             try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: path.path)
+            savedNetworkZone = networkZone
+            savedIntervalMinutes = intervalMinutes
+            settingsDirty = false
             if let pid = guardianPID() { _ = kill(pid, SIGUSR1) }
             feedback = "设置已保存：\(zoneDisplayName) · \(intervalMinutes) 分钟"
             activity.insert("刚刚 · 已保存连接设置并请求重新检测", at: 0)
@@ -184,15 +197,29 @@ final class GuardianModel: ObservableObject {
     }
 
     private func readConfiguration() {
+        guard !settingsDirty else { return }
         let path = URL(fileURLWithPath: guardianRoot + "/config.json")
         guard let data = try? Data(contentsOf: path),
               let config = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let seconds = config["check_interval_seconds"] as? Int else { return }
+        applyingConfiguration = true
+        defer { applyingConfiguration = false }
         if let zone = config["network_zone"] as? String,
            ["teaching_office", "dormitory", "auto"].contains(zone) {
             networkZone = zone
         }
         intervalMinutes = max(1, min(1440, seconds / 60))
+        savedNetworkZone = networkZone
+        savedIntervalMinutes = intervalMinutes
+        settingsDirty = false
+    }
+
+    private func updateSettingsDirty() {
+        guard !applyingConfiguration else { return }
+        settingsDirty = networkZone != savedNetworkZone || intervalMinutes != savedIntervalMinutes
+        if settingsDirty {
+            feedback = "设置已修改，点击保存后生效"
+        }
     }
 
     private func recentActivity() -> [String] {
@@ -248,7 +275,7 @@ struct MenuBarDashboard: View {
                     ForEach([1, 3, 5, 10, 15, 30, 60, 120, 360, 720, 1440], id: \.self) { Text("\($0) 分钟").tag($0) }
                 }
                 .labelsHidden().frame(width: 95)
-                Button("保存") { model.saveSettings() }.controlSize(.small)
+                Button(model.settingsDirty ? "保存*" : "保存") { model.saveSettings() }.controlSize(.small)
             }
 
             if model.networkZone == "dormitory" {

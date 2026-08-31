@@ -46,6 +46,14 @@ fi
   --no-index --find-links "${build_root}/wheels" -r "${repo_root}/requirements.txt"
 "${build_venv}/bin/python" -m unittest discover -s "${repo_root}/Tests" -v
 
+/usr/bin/xcrun swiftc -D TESTING -parse-as-library \
+  -target "${swift_target}" \
+  "${repo_root}/Sources/MenuBarApp.swift" \
+  "${repo_root}/Tests/MenuDraftHarness.swift" \
+  -framework SwiftUI -framework AppKit \
+  -o "${build_root}/menu-draft-test"
+"${build_root}/menu-draft-test"
+
 /usr/bin/xcrun swiftc -O \
   -target "${swift_target}" \
   "${repo_root}/Sources/keychain.swift" \

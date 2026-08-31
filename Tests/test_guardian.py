@@ -11,6 +11,7 @@ import requests
 
 
 MODULE_PATH = Path(__file__).resolve().parents[1] / "Sources" / "guardian.py"
+MENU_SOURCE_PATH = MODULE_PATH.with_name("MenuBarApp.swift")
 SPEC = importlib.util.spec_from_file_location("szu_guardian", MODULE_PATH)
 assert SPEC and SPEC.loader
 guardian = importlib.util.module_from_spec(SPEC)
@@ -41,6 +42,11 @@ class Session:
 
 
 class GuardianTests(unittest.TestCase):
+    def test_menu_refresh_preserves_unsaved_settings_draft(self) -> None:
+        source = MENU_SOURCE_PATH.read_text(encoding="utf-8")
+        self.assertIn("guard !settingsDirty else { return }", source)
+        self.assertIn('Button(model.settingsDirty ? "保存*" : "保存")', source)
+
     def test_connectivity_check_uses_https_backup(self) -> None:
         session = Session([
             Response("not a captive success page", url="https://captive.apple.com/hotspot-detect.html"),
