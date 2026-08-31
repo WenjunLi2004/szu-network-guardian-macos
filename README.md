@@ -21,16 +21,6 @@
 - 日志权限为 `0600`，保留 7 天，不记录请求 URL、服务器正文或异常详情
 - 无监听端口、无遥测、无远程更新
 
-## 为什么自动模式会先尝试教学区
-
-这不是 macOS 版单独创造的规则。Windows 原版最新提交
-`fix: prefer teaching network authentication` 以及 README 都明确说明：自动模式按
-“教学/办公区 → 宿舍区”的顺序尝试。
-
-原因是宿舍接口使用 HTTP GET，密码会出现在请求 URL 中；教学区则使用带证书验证的
-HTTPS SRun challenge 流程。尽管如此，固定位置的设备仍应手动选择实际区域。
-自动模式被明确标为实验性，不建议长期无人值守使用。
-
 ## 系统要求
 
 - macOS 13 Ventura 或更高版本
@@ -124,14 +114,6 @@ build/keychain
 | 宿舍区认证 | `http://172.30.255.42:801/eportal/portal/login/` |
 | 联网检测 | `https://captive.apple.com/hotspot-detect.html` |
 | 备用联网检测 | `https://www.baidu.com/favicon.ico` |
-
-### 宿舍 HTTP 剩余风险
-
-学校宿舍 ePortal 接口使用 HTTP GET，账号和密码会出现在发往认证服务器的 URL 中。
-项目禁止重定向、不会记录完整 URL、不会输出 `requests` 异常文本，并在自动模式下先做
-不带凭据的入口可达性检查，但无法阻止校园网络链路或认证服务器看到明文密码。
-
-只应在可信的深圳大学校园网络中使用宿舍模式。该限制来自学校接口，不能声称“完全安全”。
 
 更多说明见 [SECURITY.md](SECURITY.md) 和 [核心功能对照](docs/CORE_PARITY.md)。
 

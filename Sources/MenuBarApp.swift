@@ -278,14 +278,6 @@ struct MenuBarDashboard: View {
                 Button(model.settingsDirty ? "保存*" : "保存") { model.saveSettings() }.controlSize(.small)
             }
 
-            if model.networkZone == "dormitory" {
-                Label("宿舍接口使用 HTTP，认证 URL 会携带密码；仅在可信校园网内使用", systemImage: "exclamationmark.triangle.fill")
-                    .font(.system(size: 10.5)).foregroundStyle(.orange).lineLimit(2)
-            } else if model.networkZone == "auto" {
-                Label("实验模式可能依次尝试两种网关；固定设备请手动选择实际区域", systemImage: "exclamationmark.triangle.fill")
-                    .font(.system(size: 10.5)).foregroundStyle(.orange).lineLimit(2)
-            }
-
             DisclosureGroup("更新校园网凭据", isExpanded: $model.editingCredentials) {
                 VStack(spacing: 7) {
                     TextField("校园网账号", text: $model.credentialUsername)
