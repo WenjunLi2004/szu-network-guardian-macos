@@ -1,0 +1,15 @@
+.DS_Store
+.venv-build/
+build/
+dist/
+*.app/
+__pycache__/
+*.py[cod]
+*.log
+*.pid
+*.lock
+config.json
+logs/
+backups/
+venv/
+.history/

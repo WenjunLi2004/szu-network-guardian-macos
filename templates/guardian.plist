@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.wenjun.szu-network-guardian</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>__INSTALL_ROOT__/run_guardian.sh</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>__INSTALL_ROOT__</string>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <dict>
+    <key>SuccessfulExit</key>
+    <false/>
+  </dict>
+  <key>ProcessType</key>
+  <string>Background</string>
+  <key>ThrottleInterval</key>
+  <integer>15</integer>
+  <key>StandardOutPath</key>
+  <string>__INSTALL_ROOT__/logs/launchd.stdout.log</string>
+  <key>StandardErrorPath</key>
+  <string>__INSTALL_ROOT__/logs/launchd.stderr.log</string>
+</dict>
+</plist>
