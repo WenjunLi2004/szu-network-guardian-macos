@@ -84,6 +84,14 @@ class GuardianTests(unittest.TestCase):
         self.assertFalse(options["allow_redirects"])
         self.assertEqual(options["params"], {"user_account": "test-user", "user_password": "test-secret"})
 
+    def test_dormitory_already_online_is_success(self) -> None:
+        session = Session([Response('callback({"result":0,"ret_code":2,"msg":"IP: 172.24.0.2 已经在线！"})')])
+        self.assertTrue(guardian.login_dormitory(session, "test-user", "test-secret"))
+
+    def test_dormitory_failure_message_is_not_success(self) -> None:
+        session = Session([Response('callback({"result":0,"ret_code":1,"msg":"认证失败"})')])
+        self.assertFalse(guardian.login_dormitory(session, "test-user", "test-secret"))
+
     def test_dormitory_reachability_probe_has_no_credentials(self) -> None:
         session = Session([Response("{}")])
         self.assertTrue(guardian.dormitory_portal_reachable(session))

@@ -224,6 +224,14 @@ def parse_dormitory_response(text: str) -> dict[str, Any]:
     return payload
 
 
+def dormitory_response_succeeded(payload: dict[str, Any]) -> bool:
+    """Treat an existing authenticated session as success as well as a fresh login."""
+    result = payload.get("result")
+    message = str(payload.get("msg", "")).strip().casefold()
+    accepted_messages = ("success", "成功", "已经在线", "已在线", "already online")
+    return result in (1, "1", True) or any(marker in message for marker in accepted_messages)
+
+
 def dormitory_portal_reachable(session: requests.Session) -> bool:
     """Probe only the private portal endpoint; never include account parameters."""
     try:
@@ -254,9 +262,7 @@ def login_dormitory(session: requests.Session, username: str, password: str) -> 
     except (requests.RequestException, RuntimeError, ValueError):
         # requests exception text may contain the complete URL and plaintext password.
         raise RuntimeError("dormitory request failed") from None
-    result = payload.get("result")
-    message = str(payload.get("msg", ""))
-    return result in (1, "1", True) or "success" in message.lower() or "成功" in message
+    return dormitory_response_succeeded(payload)
 
 
 def authenticate_zone(

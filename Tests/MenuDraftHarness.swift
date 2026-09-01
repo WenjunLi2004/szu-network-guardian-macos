@@ -6,10 +6,11 @@ struct MenuDraftHarness {
     static func main() {
         let model = GuardianModel()
         model.refresh()
-        model.networkZone = "dormitory"
+        let draftZone = model.networkZone == "dormitory" ? "teaching_office" : "dormitory"
+        model.networkZone = draftZone
         model.refresh()
 
-        guard model.networkZone == "dormitory", model.settingsDirty else {
+        guard model.networkZone == draftZone, model.settingsDirty else {
             fputs("unsaved menu settings were overwritten by refresh\n", stderr)
             exit(1)
         }
