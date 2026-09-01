@@ -103,7 +103,15 @@ class GuardianTests(unittest.TestCase):
 
     def test_dormitory_failure_message_is_not_success(self) -> None:
         session = Session([Response('callback({"result":0,"ret_code":1,"msg":"认证失败"})')])
-        self.assertFalse(guardian.login_dormitory(session, "test-user", "test-secret"))
+        with mock.patch.object(guardian.LOG, "write") as log:
+            self.assertFalse(guardian.login_dormitory(session, "test-user", "test-secret"))
+        log.assert_called_once_with("WARN", "dormitory ePortal rejected authentication (ret_code=1)")
+
+    def test_dormitory_rejection_log_does_not_render_untrusted_code(self) -> None:
+        session = Session([Response('callback({"result":0,"ret_code":"account-secret","msg":"认证失败"})')])
+        with mock.patch.object(guardian.LOG, "write") as log:
+            self.assertFalse(guardian.login_dormitory(session, "test-user", "test-secret"))
+        log.assert_called_once_with("WARN", "dormitory ePortal rejected authentication (ret_code=unknown)")
 
     def test_dormitory_reachability_probe_has_no_credentials(self) -> None:
         session = Session([Response("{}")])

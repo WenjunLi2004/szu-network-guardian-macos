@@ -287,7 +287,17 @@ def login_dormitory(session: requests.Session, username: str, password: str) -> 
     except (requests.RequestException, RuntimeError, ValueError):
         # requests exception text may contain the complete URL and plaintext password.
         raise RuntimeError("dormitory request failed") from None
-    return dormitory_response_succeeded(payload)
+    success = dormitory_response_succeeded(payload)
+    if not success:
+        return_code = payload.get("ret_code")
+        if type(return_code) is int and 0 <= return_code <= 9999:
+            safe_code = str(return_code)
+        elif isinstance(return_code, str) and re.fullmatch(r"\d{1,4}", return_code):
+            safe_code = return_code
+        else:
+            safe_code = "unknown"
+        LOG.write("WARN", f"dormitory ePortal rejected authentication (ret_code={safe_code})")
+    return success
 
 
 def authenticate_zone(
