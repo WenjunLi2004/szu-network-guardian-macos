@@ -82,11 +82,24 @@ class GuardianTests(unittest.TestCase):
         url, options = session.calls[0]
         self.assertEqual(url, guardian.DORMITORY_LOGIN_URL)
         self.assertFalse(options["allow_redirects"])
-        self.assertEqual(options["params"], {"user_account": "test-user", "user_password": "test-secret"})
+        params = options["params"]
+        self.assertEqual(params["callback"], "dr1003")
+        self.assertEqual(params["login_method"], "1")
+        self.assertEqual(params["user_account"], ",0,test-user")
+        self.assertEqual(params["user_password"], "test-secret")
+        self.assertEqual(params["wlan_user_ip"], "")
+        self.assertEqual(params["wlan_user_mac"], "000000000000")
+        self.assertEqual(params["jsVersion"], "4.1.3")
+        self.assertEqual(params["terminal_type"], "1")
+        self.assertRegex(params["v"], r"^\d{5}$")
 
     def test_dormitory_already_online_is_success(self) -> None:
-        session = Session([Response('callback({"result":0,"ret_code":2,"msg":"IP: 172.24.0.2 已经在线！"})')])
+        session = Session([Response('callback({"result":0,"ret_code":2,"msg":""})')])
         self.assertTrue(guardian.login_dormitory(session, "test-user", "test-secret"))
+
+    def test_dormitory_account_prefix_is_not_duplicated(self) -> None:
+        params = guardian.dormitory_login_params(",0,test-user", "test-secret")
+        self.assertEqual(params["user_account"], ",0,test-user")
 
     def test_dormitory_failure_message_is_not_success(self) -> None:
         session = Session([Response('callback({"result":0,"ret_code":1,"msg":"认证失败"})')])

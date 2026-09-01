@@ -227,9 +227,34 @@ def parse_dormitory_response(text: str) -> dict[str, Any]:
 def dormitory_response_succeeded(payload: dict[str, Any]) -> bool:
     """Treat an existing authenticated session as success as well as a fresh login."""
     result = payload.get("result")
+    return_code = payload.get("ret_code")
     message = str(payload.get("msg", "")).strip().casefold()
     accepted_messages = ("success", "成功", "已经在线", "已在线", "already online")
-    return result in (1, "1", True) or any(marker in message for marker in accepted_messages)
+    return (
+        result in (1, "1", True)
+        or return_code in (2, "2")
+        or any(marker in message for marker in accepted_messages)
+    )
+
+
+def dormitory_login_params(username: str, password: str) -> dict[str, str]:
+    """Build the complete SZU ePortal query used by the dormitory login page."""
+    account = username if username.startswith(",0,") else f",0,{username}"
+    return {
+        "callback": "dr1003",
+        "login_method": "1",
+        "user_account": account,
+        "user_password": password,
+        "wlan_user_ip": "",
+        "wlan_user_ipv6": "",
+        "wlan_user_mac": "000000000000",
+        "wlan_ac_ip": "",
+        "wlan_ac_name": "",
+        "jsVersion": "4.1.3",
+        "terminal_type": "1",
+        "lang": "zh",
+        "v": str(int(time.time() * 1000) % 90000 + 10000),
+    }
 
 
 def dormitory_portal_reachable(session: requests.Session) -> bool:
@@ -250,7 +275,7 @@ def login_dormitory(session: requests.Session, username: str, password: str) -> 
     try:
         response = session.get(
             DORMITORY_LOGIN_URL,
-            params={"user_account": username, "user_password": password},
+            params=dormitory_login_params(username, password),
             headers={"Cache-Control": "no-store", "Pragma": "no-cache"},
             timeout=(4, 10),
             allow_redirects=False,
